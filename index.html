@@ -1,0 +1,281 @@
+<html><head><base href="/" />
+    <meta charset="UTF-8">
+    <title>Gerador de Senhas Seguras</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            width: 90%;
+            max-width: 600px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #4ecca3;
+            margin-bottom: 1.5rem;
+        }
+
+        .password-box {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #password {
+            font-family: monospace;
+            font-size: 1.2rem;
+            color: #4ecca3;
+            word-break: break-all;
+        }
+
+        .options {
+            margin-bottom: 1.5rem;
+        }
+
+        .option-item {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        input[type="checkbox"] {
+            margin-right: 10px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        button {
+            background: #4ecca3;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            color: #1a1a2e;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        button:hover {
+            background: #45b393;
+            transform: translateY(-2px);
+        }
+
+        .strength-meter {
+            margin-top: 1.5rem;
+        }
+
+        .strength-bar {
+            height: 10px;
+            background: #2d2d2d;
+            border-radius: 5px;
+            margin-top: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .strength-fill {
+            height: 100%;
+            width: 0%;
+            transition: all 0.3s ease;
+            border-radius: 5px;
+        }
+
+        .crack-time {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #bbb;
+        }
+
+        .copy-btn {
+            background: transparent;
+            border: 1px solid #4ecca3;
+            color: #4ecca3;
+            padding: 5px 10px;
+            margin-left: 10px;
+            width: auto;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gerador de Senhas Seguras</h1>
+        
+        <div class="password-box">
+            <span id="password">Clique em Gerar Senha</span>
+            <button class="copy-btn" onclick="copyPassword()">Copiar</button>
+        </div>
+
+        <div class="options">
+            <div class="option-item">
+                <input type="checkbox" id="uppercase" checked>
+                <label for="uppercase">Letras maiúsculas (A-Z)</label>
+            </div>
+            <div class="option-item">
+                <input type="checkbox" id="lowercase" checked>
+                <label for="lowercase">Letras minúsculas (a-z)</label>
+            </div>
+            <div class="option-item">
+                <input type="checkbox" id="numbers" checked>
+                <label for="numbers">Números (0-9)</label>
+            </div>
+            <div class="option-item">
+                <input type="checkbox" id="symbols" checked>
+                <label for="symbols">Símbolos (!@#$%^&*)</label>
+            </div>
+            
+            <div>
+                <label>Comprimento da senha: <span id="length-value">16</span></label>
+                <input type="range" id="length" min="8" max="64" value="16">
+            </div>
+        </div>
+
+        <button onclick="generatePassword()">Gerar Senha</button>
+
+        <div class="strength-meter">
+            <div>Força da senha: <span id="strength-text">-</span></div>
+            <div class="strength-bar">
+                <div class="strength-fill" id="strength-fill"></div>
+            </div>
+            <div class="crack-time" id="crack-time"></div>
+        </div>
+    </div>
+
+    <script>
+        function generatePassword() {
+            const length = document.getElementById('length').value;
+            const hasUpper = document.getElementById('uppercase').checked;
+            const hasLower = document.getElementById('lowercase').checked;
+            const hasNumbers = document.getElementById('numbers').checked;
+            const hasSymbols = document.getElementById('symbols').checked;
+
+            const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const lower = 'abcdefghijklmnopqrstuvwxyz';
+            const numbers = '0123456789';
+            const symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+
+            let chars = '';
+            if (hasUpper) chars += upper;
+            if (hasLower) chars += lower;
+            if (hasNumbers) chars += numbers;
+            if (hasSymbols) chars += symbols;
+
+            if (chars === '') {
+                alert('Selecione pelo menos um tipo de caractere!');
+                return;
+            }
+
+            let password = '';
+            for (let i = 0; i < length; i++) {
+                password += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+
+            document.getElementById('password').textContent = password;
+            calculatePasswordStrength(password);
+        }
+
+        function calculatePasswordStrength(password) {
+            let strength = 0;
+            const length = password.length;
+
+            // Critérios de pontuação
+            if (length >= 8) strength += 10;
+            if (length >= 12) strength += 20;
+            if (length >= 16) strength += 20;
+            if (/[A-Z]/.test(password)) strength += 20;
+            if (/[a-z]/.test(password)) strength += 20;
+            if (/[0-9]/.test(password)) strength += 20;
+            if (/[^A-Za-z0-9]/.test(password)) strength += 20;
+
+            // Atualizar barra de força
+            const strengthFill = document.getElementById('strength-fill');
+            const strengthText = document.getElementById('strength-text');
+            
+            strengthFill.style.width = strength + '%';
+            
+            if (strength < 40) {
+                strengthFill.style.background = '#ff4444';
+                strengthText.textContent = 'Fraca';
+            } else if (strength < 70) {
+                strengthFill.style.background = '#ffbb33';
+                strengthText.textContent = 'Média';
+            } else {
+                strengthFill.style.background = '#00C851';
+                strengthText.textContent = 'Forte';
+            }
+
+            // Calcular tempo estimado para quebrar a senha
+            calculateCrackTime(password);
+        }
+
+        function calculateCrackTime(password) {
+            const combinations = Math.pow(95, password.length); // 95 caracteres ASCII imprimíveis
+            const attemptsPerSecond = 1000000000000; // 1 trilhão de tentativas por segundo (computador muito potente)
+            const seconds = combinations / attemptsPerSecond;
+
+            let timeString;
+            if (seconds < 60) {
+                timeString = Math.round(seconds) + ' segundos';
+            } else if (seconds < 3600) {
+                timeString = Math.round(seconds / 60) + ' minutos';
+            } else if (seconds < 86400) {
+                timeString = Math.round(seconds / 3600) + ' horas';
+            } else if (seconds < 31536000) {
+                timeString = Math.round(seconds / 86400) + ' dias';
+            } else if (seconds < 31536000 * 100) {
+                timeString = Math.round(seconds / 31536000) + ' anos';
+            } else {
+                timeString = 'mais de 100 anos';
+            }
+
+            document.getElementById('crack-time').textContent = 
+                `Tempo estimado para quebrar esta senha: ${timeString}`;
+        }
+
+        function copyPassword() {
+            const password = document.getElementById('password').textContent;
+            navigator.clipboard.writeText(password).then(() => {
+                const copyBtn = document.querySelector('.copy-btn');
+                copyBtn.textContent = 'Copiado!';
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copiar';
+                }, 2000);
+            });
+        }
+
+        // Atualizar o valor do comprimento quando o slider muda
+        document.getElementById('length').addEventListener('input', function(e) {
+            document.getElementById('length-value').textContent = e.target.value;
+        });
+    </script>
+</body></html>
